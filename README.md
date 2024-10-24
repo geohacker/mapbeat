@@ -1,58 +1,53 @@
 
-# Welcome to your CDK Python project!
+# OSM Changeset WebSocket Feed
 
-This is a blank project for CDK development with Python.
-
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
-
-This project is set up like a standard Python project.  The initialization
-process also creates a virtualenv within this project, stored under the `.venv`
-directory.  To create the virtualenv it assumes that there is a `python3`
-(or `python` for Windows) executable in your path with access to the `venv`
-package. If for any reason the automatic creation of the virtualenv fails,
-you can create the virtualenv manually.
-
-To manually create a virtualenv on MacOS and Linux:
+This project sets up a Lambda that listens to the [real-changesets](https://registry.opendata.aws/real-changesets/) SNS and provides an API Gateway WebSocket connections for clients to receive the data. At the moment, each event is the metadata of the changeset that looks like this:
 
 ```
-$ python3 -m venv .venv
+{
+  "id": "158212207",
+  "created_at": "2024-10-22T13:33:41Z",
+  "closed_at": "2024-10-22T13:33:42Z",
+  "open": "false",
+  "user": "adster546",
+  "uid": "18624923",
+  "min_lat": "-31.9943481",
+  "min_lon": "115.9272943",
+  "max_lat": "-31.9732393",
+  "max_lon": "115.9494037",
+  "comments_count": "0",
+  "changes_count": "17",
+  "tag": [
+    {
+      "k": "changesets_count",
+      "v": "3219"
+    },
+    {
+      "k": "comment",
+      "v": "various connectivity and crossing updates"
+    },
+    {
+      "k": "created_by",
+      "v": "iD 2.30.4"
+    },
+    {
+      "k": "host",
+      "v": "https://www.openstreetmap.org/edit"
+    },
+    {
+      "k": "imagery_used",
+      "v": "Esri World Imagery"
+    },
+    {
+      "k": "locale",
+      "v": "en-AU"
+    }
+  ],
+  "bbox": {
+    "left": "115.9272943",
+    "bottom": "-31.9943481",
+    "right": "115.9494037",
+    "top": "-31.9732393"
+  }
+}
 ```
-
-After the init process completes and the virtualenv is created, you can use the following
-step to activate your virtualenv.
-
-```
-$ source .venv/bin/activate
-```
-
-If you are a Windows platform, you would activate the virtualenv like this:
-
-```
-% .venv\Scripts\activate.bat
-```
-
-Once the virtualenv is activated, you can install the required dependencies.
-
-```
-$ pip install -r requirements.txt
-```
-
-At this point you can now synthesize the CloudFormation template for this code.
-
-```
-$ cdk synth
-```
-
-To add additional dependencies, for example other CDK libraries, just add
-them to your `setup.py` file and rerun the `pip install -r requirements.txt`
-command.
-
-## Useful commands
-
- * `cdk ls`          list all stacks in the app
- * `cdk synth`       emits the synthesized CloudFormation template
- * `cdk deploy`      deploy this stack to your default AWS account/region
- * `cdk diff`        compare deployed stack with current state
- * `cdk docs`        open CDK documentation
-
-Enjoy!
