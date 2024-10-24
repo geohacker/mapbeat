@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket SNS Client</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #messages {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .message {
+            padding: 8px;
+            margin: 4px 0;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+        .message .timestamp {
+            color: #666;
+            font-size: 0.8em;
+        }
+        .status {
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebSocket SNS Client</h1>
+    
+    <div id="statusBar" class="status disconnected">
+        Disconnected
+    </div>
+
+    <div id="messages"></div>
+
+    <script>
+        const WS_URL = 'wss://p7dp2fexuf.execute-api.us-east-1.amazonaws.com/prod';
+        let ws;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
+        const reconnectDelay = 3000; // 3 seconds
+
+        const statusBar = document.getElementById('statusBar');
+        const messagesDiv = document.getElementById('messages');
+
+        function connect() {
+            ws = new WebSocket(WS_URL);
+
+            ws.onopen = () => {
+                console.log('Connected to WebSocket');
+                statusBar.textContent = 'Connected';
+                statusBar.classList.remove('disconnected');
+                statusBar.classList.add('connected');
+                reconnectAttempts = 0;
+            };
+
+            ws.onclose = () => {
+                console.log('Disconnected from WebSocket');
+                statusBar.textContent = 'Disconnected';
+                statusBar.classList.remove('connected');
+                statusBar.classList.add('disconnected');
+                
+                // Attempt to reconnect
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    reconnectAttempts++;
+                    statusBar.textContent = `Disconnected. Reconnecting (${reconnectAttempts}/${maxReconnectAttempts})...`;
+                    setTimeout(connect, reconnectDelay);
+                } else {
+                    statusBar.textContent = 'Disconnected. Max reconnection attempts reached.';
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                const timestamp = new Date().toLocaleTimeString();
+                
+                const messageElement = document.createElement('div');
+                messageElement.className = 'message';
+                messageElement.innerHTML = `
+                    <div class="timestamp">${timestamp}</div>
+                    <pre>${JSON.stringify(message, null, 2)}</pre>
+                `;
+                
+                messagesDiv.appendChild(messageElement);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            };
+        }
+
+        // Initial connection
+        connect();
+
+        // Reconnect on visibility change (when tab becomes visible again)
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && 
+                (!ws || ws.readyState === WebSocket.CLOSED)) {
+                reconnectAttempts = 0;
+                connect();
+            }
+        });
+    </script>
+</body>
+</html>
