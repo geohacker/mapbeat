@@ -1,5 +1,6 @@
 from aws_cdk import (
     Stack,
+    Tags,
     aws_lambda as _lambda,
     aws_apigatewayv2 as apigatewayv2,
     aws_apigatewayv2_integrations as integrations,
@@ -16,6 +17,9 @@ class MapbeatStack(Stack):
 
     def __init__(self, scope: Construct, construct_id: str, *, sns_topic_arn: str = None, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
+
+        # Tag the entire stack
+        Tags.of(self).add("Project", "Mapbeat")
 
         # Import existing SNS topic if ARN is provided, otherwise create new one
         if sns_topic_arn:

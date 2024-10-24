@@ -1,4 +1,5 @@
 const AWS = require('aws-sdk');
+const tileCover = require('@mapbox/tile-cover')
 
 // In-memory storage of connections (will be cleared on Lambda cold starts)
 let connections = new Set();
@@ -43,7 +44,24 @@ exports.handler = async (event) => {
         const key = message['Records'][0]['s3']['object']['key']
         console.log(key)
         const changeset = await getChangeset(key)
+        const metadata = changeset['metadata']
+        const bbox = metadata['bbox']
+        const geojson = {
+            "type": "Polygon",
+            "coordinates": [[
+                [parseFloat(bbox.left), parseFloat(bbox.bottom)],
+                [parseFloat(bbox.right), parseFloat(bbox.bottom)],
+                [parseFloat(bbox.right), parseFloat(bbox.top)],
+                [parseFloat(bbox.left), parseFloat(bbox.top)],
+                [parseFloat(bbox.left), parseFloat(bbox.bottom)]
+            ]]
+        }
+        const tiles = tileCover.tiles(geojson, {
+            min_zoom: 7,
+            max_zoom: 7
+        });
 
+        metadata['tiles'] = tiles
         await Promise.all([...connections].map(async (connectionId) => {
             try {
                 await api.postToConnection({

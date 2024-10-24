@@ -1,73 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OSM Changeset WebSocket Feed</title>
+    <title>Add a vector tile source</title>
+    <meta property="og:description" content="Add a vector source to a map." />
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css' />
+    <script src='https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js'></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        #messages {
-            border: 1px solid #ccc;
-            padding: 10px;
-            height: 300px;
-            overflow-y: auto;
-            margin-bottom: 20px;
-            border-radius: 4px;
-        }
-        .message {
-            padding: 8px;
-            margin: 4px 0;
-            background-color: #f5f5f5;
-            border-radius: 4px;
-        }
-        .message .timestamp {
-            color: #666;
-            font-size: 0.8em;
-        }
-        .status {
-            margin-bottom: 20px;
-            padding: 10px;
-            border-radius: 4px;
-        }
+        body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        html, body, #map { height: 100%; }
         .connected {
-            background-color: #d4edda;
             color: #155724;
         }
         .disconnected {
-            background-color: #f8d7da;
             color: #721c24;
         }
     </style>
 </head>
 <body>
-    <h1>OSM Changeset WebSocket Feed</h1>
+    <div id="map"></div>
     
-    <div id="statusBar" class="status disconnected">
-        Disconnected
+    <!-- add a floating div to the bottom left of the screen -->
+    <div id="statusBar" style="position: absolute; bottom: 10px; left: 10px; background: rgba(255, 255, 255, 0.8); padding: 10px; border-radius: 5px;">
+        <div id="status" class="disconnected">Disconnected</div>
+        <div id="messages" style="max-height: 100px; overflow-y: auto;"></div>
     </div>
 
-    <div id="messages"></div>
-
     <script>
+        var blackBasemapStyle = {
+            "version": 8,
+            "name": "Black Basemap",
+            "sources": {},  // No data sources needed for a plain background
+            "layers": [
+            {
+                "id": "background",
+                "type": "background",
+                "paint": {
+                    "background-color": "#000000"  // Set to black
+                }
+            }
+            ]
+        };
+
         const WS_URL = 'wss://p7dp2fexuf.execute-api.us-east-1.amazonaws.com/prod';
         let ws;
         let reconnectAttempts = 0;
         const maxReconnectAttempts = 5;
         const reconnectDelay = 3000; // 3 seconds
 
-        const statusBar = document.getElementById('statusBar');
-        const messagesDiv = document.getElementById('messages');
-
         function connect() {
             ws = new WebSocket(WS_URL);
 
             ws.onopen = () => {
                 console.log('Connected to WebSocket');
+                statusBar = document.getElementById('status')
                 statusBar.textContent = 'Connected';
                 statusBar.classList.remove('disconnected');
                 statusBar.classList.add('connected');
@@ -95,32 +82,67 @@
             };
 
             ws.onmessage = (event) => {
+                map.setFilter('gridson', ["==", "index", ""]);
                 const message = JSON.parse(event.data);
                 const timestamp = new Date().toLocaleTimeString();
-                
-                const messageElement = document.createElement('div');
-                messageElement.className = 'message';
-                messageElement.innerHTML = `
+                const layerFilter = ['any']
+                const tiles = message.tiles;
+                tiles.forEach(t => {
+                    const index = t.join(',');
+                    const filter = ['==', 'index', index]
+                    layerFilter.push(filter)
+                });
+                map.setFilter('gridson', layerFilter);
+
+                const messagesDiv = document.getElementById('messages');
+                const newMessage = document.createElement('div');
+                messagesDiv.innerHTML = `
                     <div class="timestamp">${timestamp}</div>
-                    <pre>${JSON.stringify(message, null, 2)}</pre>
+                    <pre>User: ${message.user}</pre>
+                    <pre>Changes Count: ${message.changes_count}</pre>
                 `;
-                
-                messagesDiv.appendChild(messageElement);
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
             };
         }
 
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: blackBasemapStyle,
+            zoom: 1.5,
+            center: [10, 40]
+        });
+
+        map.on('load', () => {
+            map.addSource('grids', {
+                type: 'vector',
+                url: 'https://api.mapbox.com/v4/geohacker.aeh6ayo2.json?access_token=pk.eyJ1IjoiZ2VvaGFja2VyIiwiYSI6ImNsajN4ZnA0MDFpYWczZ3A5MWxnZHBkdG8ifQ.Sot_30eI1tfJ6sfNNxPHtQ' // URL to your vector tiles
+            });
+
+            map.addLayer({
+                'id': 'grids',
+                'type': 'fill',
+                'source': 'grids',
+                'source-layer': 'z7',
+                'paint': {
+                    'fill-color': 'black',
+                    'fill-outline-color': '#3b3b3b'
+                }
+            });
+
+            map.addLayer({
+                'id': 'gridson',
+                'type': 'fill',
+                'source': 'grids',
+                'source-layer': 'z7',
+                'paint': {
+                    'fill-color': 'red',
+                    'fill-outline-color': 'white'
+                },
+                "filter": ["==", "index", ""]
+            });
+        });
+
         // Initial connection
         connect();
-
-        // Reconnect on visibility change (when tab becomes visible again)
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible' && 
-                (!ws || ws.readyState === WebSocket.CLOSED)) {
-                reconnectAttempts = 0;
-                connect();
-            }
-        });
     </script>
 </body>
 </html>
