@@ -114,7 +114,9 @@
         map.on('load', () => {
             map.addSource('grids', {
                 type: 'vector',
-                url: 'https://api.mapbox.com/v4/geohacker.aeh6ayo2.json?access_token=pk.eyJ1IjoiZ2VvaGFja2VyIiwiYSI6ImNsajN4ZnA0MDFpYWczZ3A5MWxnZHBkdG8ifQ.Sot_30eI1tfJ6sfNNxPHtQ' // URL to your vector tiles
+                attribution: 'Mapbox',
+                tiles: ['https://a.tiles.mapbox.com/v4/geohacker.aeh6ayo2/{z}/{x}/{y}.vector.pbf?access_token=pk.eyJ1IjoiZ2VvaGFja2VyIiwiYSI6ImNsajN4ZnA0MDFpYWczZ3A5MWxnZHBkdG8ifQ.Sot_30eI1tfJ6sfNNxPHtQ', 'https://b.tiles.mapbox.com/v4/geohacker.aeh6ayo2/{z}/{x}/{y}.vector.pbf?access_token=pk.eyJ1IjoiZ2VvaGFja2VyIiwiYSI6ImNsajN4ZnA0MDFpYWczZ3A5MWxnZHBkdG8ifQ.Sot_30eI1tfJ6sfNNxPHtQ']
+                // url: 'https://api.mapbox.com/v4/geohacker.aeh6ayo2.json?access_token=' // URL to your vector tiles
             });
 
             map.addLayer({
