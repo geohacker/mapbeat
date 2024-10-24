@@ -6,21 +6,26 @@ let connections = new Set();
 const s3 = new AWS.S3();
 const bucketName = 'real-changesets';
 
-const getChangeset = (key) => {
-    s3.getObject({ Bucket: bucketName, Key: key }, (err, data) => {
-        if (err) {
-          console.error("Error fetching the file: ", err);
-          return;
-        }
+const getChangeset = async (key) => {
+    return new Promise((resolve, reject) => {
+        console.log('bucketName', bucketName)
+        console.log('key', key);
+        s3.getObject({ Bucket: bucketName, Key: key }, (err, data) => {
+            if (err) {
+              console.error("Error fetching the file: ", err);
+              reject(err);
+            }
 
-        try {
-          const jsonData = JSON.parse(data.Body.toString('utf-8'));
-          console.log("JSON data:", jsonData);
-          return jsonData
-        } catch (parseError) {
-          console.error("Error parsing JSON: ", parseError);
-        }
-      });
+            try {
+              const jsonData = JSON.parse(data.Body.toString('utf-8'));
+              console.log("JSON data:", jsonData);
+              resolve(jsonData)
+            } catch (parseError) {
+              console.error("Error parsing JSON: ", parseError);
+              reject(parseError);
+            }
+          });
+    })
 }
 
 exports.handler = async (event) => {
@@ -37,13 +42,13 @@ exports.handler = async (event) => {
         
         const key = message['Records'][0]['s3']['object']['key']
         console.log(key)
-        const changeset = getChangeset(key)
+        const changeset = await getChangeset(key)
 
         await Promise.all([...connections].map(async (connectionId) => {
             try {
                 await api.postToConnection({
                     ConnectionId: connectionId,
-                    Data: changeset
+                    Data: JSON.stringify(changeset['metadata'])
                 }).promise();
             } catch (e) {
                 if (e.statusCode === 410) {

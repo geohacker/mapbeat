@@ -6,6 +6,7 @@ from aws_cdk import (
     aws_sns as sns,
     aws_sns_subscriptions as subscriptions,
     aws_iam as iam,
+    aws_s3 as s3,
     CfnOutput
 )
 from constructs import Construct
@@ -26,6 +27,9 @@ class MapbeatStack(Stack):
                 topic_name="websocket-notifications"
             )
 
+        # Import bucket
+        bucket = s3.Bucket.from_bucket_name(self, "ExistingBucket", 'real-changesets')
+
         # Create Lambda function from external code
         lambda_path = Path(__file__).parent.parent / "lambda"
         websocket_lambda = _lambda.Function(
@@ -34,6 +38,9 @@ class MapbeatStack(Stack):
             handler="index.handler",
             code=_lambda.Code.from_asset(str(lambda_path))
         )
+
+        # Grant the Lambda function read access to the S3 bucket
+        bucket.grant_read(websocket_lambda)
 
         # Create WebSocket API
         websocket_api = apigatewayv2.WebSocketApi(
