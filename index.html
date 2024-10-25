@@ -22,7 +22,7 @@
             position: absolute;
             bottom: 10px;
             left: 10px;
-            background: rgba(0,0,00.8);
+            background: transparent;
             padding: 10px;
             border-radius: 5px;
         }
@@ -160,14 +160,6 @@
                 // Update the HTML div with user and change count information based on the age of the tile
                 const messagesDiv = document.getElementById('messages');
                 messagesDiv.innerHTML = ''; // Clear previous messages
-                // messagesDiv.querySelectorAll('div').forEach(div => div.id = 'old');
-                // const tileInfo = document.createElement('div')
-                // tileInfo.innerHTML = `
-                //             <div id='new'>${timestamp}</div>
-                //             <div id='new'>User ${message.user}</div>
-                //             <div id='new'>Changes ${message.changes_count}</div>
-                //         `;
-                // messagesDiv.appendChild(tileInfo);
 
                 for (let tile in tileAges) {
                     if (tileAges.hasOwnProperty(tile)) {
@@ -182,27 +174,6 @@
                         messagesDiv.appendChild(tileInfo);
                     }
                 }
-                // layerFilter = ['any'];
-                // tiles.forEach(t => {
-                //     const index = t.join(',');
-                //     const filter = ['==', 'index', index];
-                //     layerFilter.push(filter);
-                // });
-
-                // map.setFilter('gridson', layerFilter);
-                // console.log(layerFilter);
-
-                // map.setPaintProperty('gridson', 'fill-color', 'red', {
-                //     duration: 5000
-                // });
-
-                // const messagesDiv = document.getElementById('messages');
-                // const newMessage = document.createElement('div');
-                // messagesDiv.innerHTML = `
-                //     <div class="timestamp">${timestamp}</div>
-                //     <pre>User: ${message.user}</pre>
-                //     <pre>Changes Count: ${message.changes_count}</pre>
-                // `;
             };
             };
 
