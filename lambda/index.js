@@ -56,12 +56,21 @@ exports.handler = async (event) => {
                 [parseFloat(bbox.left), parseFloat(bbox.bottom)]
             ]]
         }
-        const tiles = tileCover.tiles(geojson, {
-            min_zoom: 7,
-            max_zoom: 7
-        });
+        console.log('metadata', metadata)
+        console.log('geojson', geojson)
+        let tiles = []
+        try {
+            tiles = tileCover.tiles(geojson, {
+                min_zoom: 7,
+                max_zoom: 7
+            });
+        } catch (error) {
+            console.log('failed to get tiles', error)
+        }
 
-        metadata['tiles'] = tiles
+        if (tiles.length) {
+            metadata['tiles'] = tiles
+        }
         await Promise.all([...connections].map(async (connectionId) => {
             try {
                 await api.postToConnection({

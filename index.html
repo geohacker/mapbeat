@@ -81,18 +81,65 @@
                 console.error('WebSocket error:', error);
             };
 
+            const tileAges = {};
+
+            const updateTileAge = (tiles) => {
+                // Increment age of existing tiles
+                for (let tile in tileAges) {
+                    if (tileAges.hasOwnProperty(tile)) {
+                        tileAges[tile]++;
+                    }
+                }
+
+                // Add new tiles with age 1
+                tiles.forEach(tile => {
+                    const tileKey = tile.join(',');
+                    tileAges[tileKey] = 1;
+                });
+
+                console.log(tileAges);
+            }
+
+            const updateMapStyle = () => {
+                // adjust layer opacity based on tile age
+                const paintProperties = {};
+                for (let tile in tileAges) {
+                    if (tileAges.hasOwnProperty(tile)) {
+                        const opacity = Math.max(1 - tileAges[tile] * 0.3, 0); // Decrease opacity by 0.1 per age, minimum 0
+                        paintProperties[tile] = opacity;
+                    }
+                }
+
+                map.setPaintProperty('gridson', 'fill-opacity', [
+                    'match',
+                    ['get', 'index'],
+                    ...Object.entries(paintProperties).flat(),
+                    0 // Default opacity if no match
+                ]);
+            }
+
+            let layerFilter = ['any'];
             ws.onmessage = (event) => {
-                map.setFilter('gridson', ["==", "index", ""]);
+                // map.setFilter('decay', layerFilter)
+
                 const message = JSON.parse(event.data);
                 const timestamp = new Date().toLocaleTimeString();
-                const layerFilter = ['any']
                 const tiles = message.tiles;
-                tiles.forEach(t => {
-                    const index = t.join(',');
-                    const filter = ['==', 'index', index]
-                    layerFilter.push(filter)
-                });
-                map.setFilter('gridson', layerFilter);
+                updateTileAge(tiles);
+                updateMapStyle();
+                // layerFilter = ['any'];
+                // tiles.forEach(t => {
+                //     const index = t.join(',');
+                //     const filter = ['==', 'index', index];
+                //     layerFilter.push(filter);
+                // });
+
+                // map.setFilter('gridson', layerFilter);
+                // console.log(layerFilter);
+
+                // map.setPaintProperty('gridson', 'fill-color', 'red', {
+                //     duration: 5000
+                // });
 
                 const messagesDiv = document.getElementById('messages');
                 const newMessage = document.createElement('div');
@@ -102,7 +149,7 @@
                     <pre>Changes Count: ${message.changes_count}</pre>
                 `;
             };
-        }
+            };
 
         const map = new maplibregl.Map({
             container: 'map',
@@ -137,10 +184,23 @@
                 'source-layer': 'z7',
                 'paint': {
                     'fill-color': 'red',
-                    'fill-outline-color': 'white'
-                },
-                "filter": ["==", "index", ""]
+                    'fill-outline-color': 'white',
+                    'fill-opacity': 0
+                }
+                // "filter": ["==", "index", ""]
             });
+
+            // map.addLayer({
+            //     'id': 'decay',
+            //     'type': 'fill',
+            //     'source': 'grids',
+            //     'source-layer': 'z7',
+            //     'paint': {
+            //         'fill-color': 'grey',
+            //         'fill-outline-color': 'white'
+            //     },
+            //     "filter": ["==", "index", ""]
+            // });
         });
 
         // Initial connection
