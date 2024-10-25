@@ -145,7 +145,7 @@
                         if (tileAges[tile] > 5) {
                             delete tileAges[tile];
                         }
-                        const opacity = Math.max(1 - tileAges[tile] * 0.2, 0); // Decrease opacity by 0.2 per age, minimum 0
+                        const opacity = Math.max(1 - tileAges[tile]['age'] * 0.2, 0); // Decrease opacity by 0.2 per age, minimum 0
                         paintProperties[tile] = opacity;
                     }
                 }
