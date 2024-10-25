@@ -105,7 +105,7 @@
                 const paintProperties = {};
                 for (let tile in tileAges) {
                     if (tileAges.hasOwnProperty(tile)) {
-                        const opacity = Math.max(1 - tileAges[tile] * 0.3, 0); // Decrease opacity by 0.1 per age, minimum 0
+                        const opacity = Math.max(1 - tileAges[tile] * 0.2, 0); // Decrease opacity by 0.2 per age, minimum 0
                         paintProperties[tile] = opacity;
                     }
                 }
